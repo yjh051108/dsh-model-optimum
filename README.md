@@ -26,8 +26,19 @@ cd dsh-model-optimum
 ./install.sh          # Windows: .\install.ps1
 ```
 
-> ⚠️ **这两个包都【没有】`dsh.bundle`** ⇒ **走"装配成 bundle"不会激活**（**不是报错，是不生效**）
-> ⇒ 需要走**注入**路径：`dev_inject_plugin <包目录>`（**需环境里常驻注入器** —— 见 `dsh-omc`）。
+> ★★ **这两个包都声明了 `dsh.bundle`** ⇒ **`dsh plugin add` 之后它们进 `dsh.profile.bundles` ⇒ 真激活** ✅
+> ```
+> 判据（可自己复核 · 两个包都这样）：
+>   ① `insert.name` == `package.json.name`（`cordis.patch.yml` 里那一行）
+>   ② ★ 在装着它的 profile 目录下 `import('<package.json.name>')` ⇒ 必须 **OK**
+>      ⇒ ★ 而 (`insert.name` 是【模块名】) —— loader 的 `_init()` 拿它去 `import()`，
+>        所以**少了 `@dsh-external/` 前缀就会 `ERR_MODULE_NOT_FOUND`**（**进了 bundles 也不激活**）
+>   ③ `files` 里有 `cordis.patch.yml`（**否则 patch 不进包 ⇒ 装了照样没用**）
+> ```
+> ⚠️ **诚实边界**：**"进了 `dsh.profile.bundles`" 只证明"过了 `reconcilePlugins()`"** ——
+> **不到"激活"**。**"激活"的判据是 ②（入口真能解析）+ 该插件的效果真出现** ✅
+> ⚠️ **本仓的两个包 `private: true` 且不在 npm** ⇒ 装法是 **`dsh plugin add <你 clone 的仓>/packages/<包>`**
+> （或直接跑 `./install.sh` —— 它内部就是这么做的）。
 
 ---
 

@@ -42,13 +42,31 @@ foreach ($d in (Get-ChildItem $PkgsDir -Directory | Sort-Object Name)) {
   if ($LASTEXITCODE -eq 0) { Ok $name; $pass += $name } else { Err "$name（可单独重试）"; $fail += $name }
 }
 
-Info '[2/3] 能力自检（这两个包没有 dsh.bundle ⇒ 需注入）'
+Info '[2/3] ★ 激活自检（**不是"有 dsh.bundle 就算过"**）'
+# 为什么不能只查 `dsh.bundle` 字段：symbiote 曾把 insert.name 写成 'dsh-symbiote'（少了 @dsh-external/ 前缀）
+#   => loader 的 _init() 会 import('dsh-symbiote') => ERR_MODULE_NOT_FOUND => 进了 bundles 也不激活。
+#   依据：cordis-plugin-loader/lib/index.js: plugin = await this.parent.tree.import(this.options.name, ...)
 foreach ($d in (Get-ChildItem $PkgsDir -Directory | Sort-Object Name)) {
   $pj = Join-Path $d.FullName 'package.json'
   if (-not (Test-Path $pj)) { continue }
-  $txt = Get-Content $pj -Raw -Encoding UTF8
-  if ($txt -match '"bundle"') { Ok "$($d.Name)：有 dsh.bundle（官方装配路径有效）" }
-  else { Warn "$($d.Name)：无 dsh.bundle ⇒ 走装配成 bundle 不会激活 ⇒ 需注入：dev_inject_plugin $($d.FullName)" }
+  $j = Get-Content $pj -Raw -Encoding UTF8 | ConvertFrom-Json
+  if (-not $j.dsh.bundle.patch) {
+    Err "$($d.Name)：无 dsh.bundle => dsh plugin add 会成功但【不进 dsh.profile.bundles】=> 不激活"
+    $fail += "$($d.Name):no-bundle"; continue
+  }
+  $patchPath = Join-Path $d.FullName $j.dsh.bundle.patch
+  if (-not (Test-Path $patchPath)) {
+    Err "$($d.Name)：patch 文件不在（$patchPath）=> 它是 files 里的漏项"
+    $fail += "$($d.Name):patch-missing"; continue
+  }
+  $pt = Get-Content $patchPath -Raw -Encoding UTF8
+  $m = [regex]::Match($pt, '(?m)^\s+name:\s*[''"]?([^''"\r\n]+)')
+  $insname = if ($m.Success) { $m.Groups[1].Value.Trim() } else { '' }
+  if ($insname -ne $j.name) {
+    Err "$($d.Name)：[insert.name]($insname) != [package.json.name]($($j.name)) => loader import() 会失败 => 不激活"
+    $fail += "$($d.Name):name-mismatch"; continue
+  }
+  Ok "$($d.Name)：[insert.name] == 包名（$($j.name)）· patch 随包"
 }
 
 Info '[3/3] 汇总'
