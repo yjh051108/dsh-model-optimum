@@ -22,8 +22,8 @@
  *
  * 落点：~/.dsh/model-fit/<sid>.jsonl（追加式台账，供事后判对错）
  */
-import type { Context } from 'cordis';
-import z from 'schemastery';
+import type { Context } from '@deepseek-ai/cordis';
+import z from '@deepseek-ai/schemastery';
 export declare const name = "@dsh-external/dsh-model-fit";
 export declare const inject: string[];
 export declare const Config: z<Schemastery.ObjectS<{

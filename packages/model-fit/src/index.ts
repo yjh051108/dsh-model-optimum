@@ -22,7 +22,7 @@
  *
  * 落点：~/.dsh/model-fit/<sid>.jsonl（追加式台账，供事后判对错）
  */
-import type { Context } from 'cordis'
+import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 // ⚠️ **必须是【scoped】名**（`B195` · 2026-09-19 实测 · 委托方"别人一装上就能用"的要求）
