@@ -1,0 +1,27 @@
+# dsh-model-fit bundle 层：插入一条插件行（`B192`）
+#
+# 【为什么加它】2026-09-19 · 委托方要"别人一装上就能用"，而本包原来【装了不激活】
+# ```
+# 【现场（我实测 + 读 DSH 本体源码）】
+#   · 本包 `package.json` **没有 `dsh.bundle`** ⇒
+#     `dsh plugin add <dir>` 会**成功**，而 `reconcilePlugins()` **只写一句 warning**：
+#     `else if (!isBundle && !beforeDeps.has(n)) process.stderr.write("warning: …")`
+#     ⇒ ★★★ **包进了 `dependencies`，却【不进 `dsh.profile.bundles`】⇒ 不激活** ❌
+#   · 而 `exportsPatch()` 的判据逐字：`readProfileManifest(…).dsh?.bundle?.patch !== void 0`
+#     ⇒ ★ **即：`dsh.bundle.patch` 指向的文件【存在】才认** ✅
+# 【★ 而本包【本来就是一个完整的 cordis 插件】】`src/index.ts` 里四件全齐：
+#   `export const name = '@dsh-external/dsh-model-fit'`（L35）·
+#   `export const inject = ['tools']`（L36）· `export const Config = z.object({…})`（L38）·
+#   `export function apply(ctx, config)`（L249）
+#   ⇒ ★★ **所以缺的【只有这一份 patch 文件】+ 一个 `dsh` 字段** ✅
+# ```
+#
+# ⚠️ **`config: {}` 是有意的**（与 `teamkit` 同一口径）：本插件的全部行为由 `lib/config.js` 的
+#    schema 驱动，默认值就是"装上就有效果"那一档 ⇒ **不在这里散落路径**（单一事实来源）。
+#
+# ⚠️ **config 覆盖语义**（`LANDMINES §14.2`，已实测）：profile patch 里覆盖 `config` 是
+#    **按顶层键赋值、不是深合并** ⇒ 用户若要覆盖，**必须把要保留的键一起写全**。
+- insert:
+    - id: dsh-model-fit
+      name: '@dsh-external/dsh-model-fit'
+      config: {}
