@@ -25,7 +25,24 @@
 import type { Context } from 'cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import z from 'schemastery'
+// ⚠️ **必须是【scoped】名**（`B195` · 2026-09-19 实测 · 委托方"别人一装上就能用"的要求）
+// ```
+// 【现场】本包原来写 `import z from 'schemastery'`（**裸名**）⇒
+//   ★ 而**宿主只提供 `@deepseek-ai/schemastery`**（我实测两处）：
+//     · `dsh/node_modules/@deepseek-ai/schemastery` ✅ 存在
+//     · `dsh/node_modules/schemastery` ❌ **不存在**
+//     · `$DSH_HOME/profiles/node_modules/schemastery` ❌ **不存在**（**父目录级也没有**）
+//   ⇒ ★★ 而 `web` profile 里**恰好有一个裸的** —— 我追了它的 junction 链：
+//     `profiles/web/node_modules/schemastery` → `.dsh-module-fallback/…` →
+//     **`D:\dsh\super-injector\node_modules\schemastery`** → 宿主 scoped 那个
+//     ⇒ ★★★ **即：那是【本机开发路径的副作用】，不是机制** ——
+//       而**全 profile 的 package.json 里声明裸名的包 = 0 个**（我扫过）❌
+//   ⇒ ⇒ ★★★ **所以干净环境（陌生人）里 import 会失败** —— 而那是 Release 前必须修的 ✅
+// 【对照】`symbiote` 用的是 **`@deepseek-ai/schemastery`** ⇒ **干净环境 import OK** ✅
+// 【★ 判据（我收）】包要 import 的每个模块 **必须写在 `peerDependencies` 里、且用【正确的名字】**
+//   ⇒ ⚠️ "本机能跑"不等于"别人能跑"（**本机有开发路径的副作用**）✅
+// ```
+import z from '@deepseek-ai/schemastery'
 import { createHash } from 'node:crypto'
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
