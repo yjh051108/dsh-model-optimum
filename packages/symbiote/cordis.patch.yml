@@ -1,0 +1,32 @@
+# dsh-symbiote bundle 层：插入一条插件行（`B192` · 与 model-fit 同族）
+#
+# 【为什么加它】2026-09-19 · 委托方要「**别人一装上就能用**」，而本包原来【装了不激活】
+# ```
+# 【现场】本包 `package.json` **没有 `dsh.bundle`** ⇒ `dsh plugin add <dir>` 会**成功**，
+#   而 `reconcilePlugins()` **只写一句 warning**：
+#     `dsh: warning: … installed as a plain dependency, not a profile layer`
+#   ⇒ ★★★ **包进了 `dependencies`，却【不进 `dsh.profile.bundles`】⇒ 不激活** ❌
+#   ⇒ 那正是委托方最恨的"装了才发现"。
+# 【★ 而本包【本来就是一个完整的 cordis 插件】】`src/index.js` 四件全齐：
+#   `export const name = 'dsh-symbiote'`（L27）· `export const inject = ['tools']`（L28）·
+#   `export const Config = z.object({})`（L29）· `export function apply(ctx, _config)`（L268）
+#   ⇒ ★★ **所以缺的【只有这一份 patch 文件】+ 一个 `dsh` 字段** ✅
+# ```
+#
+# ⚠️ **`name` 用【源码里的那个】`'dsh-symbiote'`**（**不带 `@dsh-external/` 前缀**）：
+# ```
+# · 本包 `src/index.js:27` 逐字：`export const name = 'dsh-symbiote'`
+# · ★ 而 `model-fit` 的是 `'@dsh-external/dsh-model-fit'` ⇒ ★★ **两个包不一样，【别照抄】** ✅
+# · 依据：`cordis.patch.yml` 的 `insert.name` 是**插件自己的 `name`**（**注册进 loader 的那个**），
+#   而 `package.json` 的 `name` 是**包名**（两个概念）⇒ ★ **以源码为准** ✅
+# ```
+#
+# ⚠️ **`config: {}` 是有意的**（与 `teamkit`/`model-fit` 同一口径）：本插件的全部行为由
+#   `lib/config.js` 的 schema 驱动，默认值就是"装上就有效果"那一档 ⇒ **不在这里散落路径**（单一事实来源）。
+#
+# ⚠️ **config 覆盖语义**（`LANDMINES §14.2`，已实测）：profile patch 里覆盖 `config` 是
+#   **按顶层键赋值、不是深合并** ⇒ 用户若要覆盖，**必须把要保留的键一起写全**。
+- insert:
+    - id: dsh-symbiote
+      name: 'dsh-symbiote'
+      config: {}
