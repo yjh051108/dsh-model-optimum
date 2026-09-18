@@ -13,12 +13,18 @@
 #   ⇒ ★★ **所以缺的【只有这一份 patch 文件】+ 一个 `dsh` 字段** ✅
 # ```
 #
-# ⚠️ **`name` 用【源码里的那个】`'dsh-symbiote'`**（**不带 `@dsh-external/` 前缀**）：
+# ⚠️ **`name` 必须是【模块名】= `package.json` 的 `name`**（**带 `@dsh-external/` 前缀**）：
 # ```
-# · 本包 `src/index.js:27` 逐字：`export const name = 'dsh-symbiote'`
-# · ★ 而 `model-fit` 的是 `'@dsh-external/dsh-model-fit'` ⇒ ★★ **两个包不一样，【别照抄】** ✅
-# · 依据：`cordis.patch.yml` 的 `insert.name` 是**插件自己的 `name`**（**注册进 loader 的那个**），
-#   而 `package.json` 的 `name` 是**包名**（两个概念）⇒ ★ **以源码为准** ✅
+# ★★★ **依据（DSH 本体源码逐字）** —— `cordis-plugin-loader/lib/index.js` 的 `_init()`：
+#   `plugin = this.loader.unwrapExports(await this.parent.tree.import(this.options.name, …))`
+#   ⇒ ★★ **即：`insert.name` 被【原样拿去 `import()`】** ⇒ **它必须是能 resolve 的模块名** ✅
+#   ⇒ 而安装后 profile 的 `node_modules` 里那份是**按 `package.json.name` 落的**
+#     ⇒ ★★★ **所以它必须【逐字等于 `package.json.name`】**（否则 `updateError("import")`）❌
+# ⚠️ **而 `src/index.js:27` 的 `export const name = 'dsh-symbiote'` 是【插件运行时自报的名字】** ——
+#   **它是 `ctx` 里的那个 `name`**，**与"模块名"是两个概念** ⇒ **两者可以不同** ✅
+#   ⇒ ★ **所以不能"以源码为准"** —— 这里要的是**模块名**。
+#   ⚠️ **我第一版写成 `'dsh-symbiote'`（照源码），是错的** ——
+#     判据教训：**判"一个字段该填什么" ⇒ 要读【消费方拿它干什么】，而不是读【生产方自己叫什么】** ✅
 # ```
 #
 # ⚠️ **`config: {}` 是有意的**（与 `teamkit`/`model-fit` 同一口径）：本插件的全部行为由
@@ -28,5 +34,5 @@
 #   **按顶层键赋值、不是深合并** ⇒ 用户若要覆盖，**必须把要保留的键一起写全**。
 - insert:
     - id: dsh-symbiote
-      name: 'dsh-symbiote'
+      name: '@dsh-external/dsh-symbiote'
       config: {}
